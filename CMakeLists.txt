@@ -7,4 +7,4 @@ include_directories(.)
 
 add_executable(comtest
         comtest.cpp
-        comtest.h cmake-build-debug/MessageHandler.cpp cmake-build-debug/MessageHandler.h)
+        comtest.h MessageHandler.cpp MessageHandler.h MessagePrinter.cpp MessagePrinter.h "common .h")
