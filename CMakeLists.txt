@@ -7,4 +7,4 @@ include_directories(.)
 
 add_executable(comtest
         comtest.cpp
-        comtest.h MessageHandler.cpp MessageHandler.h MessagePrinter.cpp MessagePrinter.h "common .h")
+        comtest.h MessageHandler.cpp MessageHandler.h MessagePrinter.cpp MessagePrinter.h "common .h" AutoMeasure.cpp AutoMeasure.h MessageHandlerEnternet.cpp MessageHandlerEnternet.h)

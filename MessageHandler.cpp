@@ -7,7 +7,7 @@
 using namespace std;
 
 
-void parseMsg(vector<WORD> &msg,  vector<__uint16_t> &telegramBuffer,void action (vector<__uint16_t>&)) //TODO add option for non verbose action/select action
+void parseMsgRS232(vector<__uint16_t> &msg, vector<__uint16_t> &telegramBuffer, void *action (vector<__uint16_t>&))
 {
     int len= msg.size();
     // check crc
@@ -19,10 +19,10 @@ void parseMsg(vector<WORD> &msg,  vector<__uint16_t> &telegramBuffer,void action
     }
 
     // DEBUG DATA
-    printf("crcToCheck: %04X\n", msg[len - 1]);
-    printf("crcCalculated: %04X\n", msg[len - 1]);
-    printf("sendAddress: %04X\n", msg[0]);
-    printf("sendMsgLen: %04X\n", msg[1]);
+    //printf("crcToCheck: %04X\n", msg[len - 1]);
+    //printf("crcCalculated: %04X\n", msg[len - 1]);
+    //printf("sendAddress: %04X\n", msg[0]);
+    //printf("sendMsgLen: %04X\n", msg[1]);
 
     if (len > 3 && msg[2] == 0)
     { // check if single package
@@ -61,32 +61,12 @@ std::string wordToString(WORD input)
     }
     return res;
 }
-/*
-void sendCommand(int serial_port, WORD *data, WORD dataLen) //TODO remove
-{
-    WORD msg[dataLen + 3];
-    buildMsgFromWord(data, dataLen, reinterpret_cast<__uint16_t (&)[]>(msg));
-    std::string telegram;
-    telegram.append({0x2});
-    printf("Msg to Send: ");
-    for (int i = 0; i < dataLen + 3; ++i)
-    {
-        telegram.append(wordToString(msg[i]));
-        printf("%04X,",msg[i]);
-    }
-    telegram.append({0x3});
-    // printf(telegram.c_str());
-    //write(serial_port, telegram.c_str(), (dataLen + 3) * 4 + 2);
-    printf("\n");
-}*/
 
-string buildTelegram(vector<WORD> data){ //TODO finish
+
+string buildTelegramRS232(vector<__uint16_t> data){ //TODO finish
     WORD len= data.size() + 1;
     data.insert(data.begin(),len);
     data.insert(data.begin(),0x1410);
-
-
-
 
     data.push_back( vecCrc(data));
     std::string telegram;
@@ -98,8 +78,6 @@ string buildTelegram(vector<WORD> data){ //TODO finish
         printf("%04X,",i);
     }
     telegram.append({0x3});
-    // printf(telegram.c_str());
-    //write(serial_port, telegram.c_str(), (dataLen + 3) * 4 + 2);
     printf("\n");
     return telegram;
 }
@@ -134,7 +112,7 @@ WORD block_crc16_word(WORD *data, WORD numOfBytes, WORD initial_crc)
 
 // TODO clean up
 // calculates an array of words from a given msg_string, returns the length of res
-// int parseMsg(msg_String, length of msg, pointer to result, idx of result)
+// int parseMsgRS232(msg_String, length of msg, pointer to result, idx of result)
 int convertMsgToWords(vector<char> &msg,  vector<__uint16_t> &res)
 {
     vector<__uint16_t> tempRes;
@@ -149,25 +127,26 @@ int convertMsgToWords(vector<char> &msg,  vector<__uint16_t> &res)
         // printf("a:%i\tread: %s\tas: %lx\n",a,hexSubString,number);
         tempRes.push_back(number);
     }
-    printf("msg in words: ");//DEBUG
+    //printf("msg in words: ");//DEBUG
 
     for (int i = 0; i < (len - 2) / 2; i += 2)
     {
         __uint16_t tmp = (tempRes[i] << 8) + tempRes[i + 1];
         res.push_back(tmp);
-        printf("%04x,", tmp);//DEBUG
+        //printf("%04x,", tmp);//DEBUG
     }
-    printf("\n");//DEBUG
-    printf("msg as ascii: ");
-    for (int i = 0; i < (len - 2) / 2; i += 2)
-    {
-        printf(" %c %c,",std::min(std::max(0x20,(int)tempRes[i]), 0x7E),std::min(std::max(0x20,(int)tempRes[i+1]), 0x7E) );
-    }
-    printf("\n");
+    //printf("\n");//DEBUG
+    //printf("msg as ascii: ");
+    //for (int i = 0; i < (len - 2) / 2; i += 2)
+    //{
+    //    printf(" %c %c,",std::min(std::max(0x20,(int)tempRes[i]), 0x7E),std::min(std::max(0x20,(int)tempRes[i+1]), 0x7E) );
+    //}
+    //printf("\n");
     return (len - 2) / 4;
 }
 
-bool readBuffer(const char *readBuf, vector<char> &msgBuf, int bytesRead, bool continueLastMsg,vector<__uint16_t> &telegramBuffer,void action (vector<__uint16_t>&))
+bool readBufferRS232(const char *readBuf, vector<char> &msgBuf, int bytesRead, bool continueLastMsg,
+                     vector<__uint16_t> &telegramBuffer, void *action (vector<__uint16_t>&))
 {
 
     int i = 0;
@@ -195,7 +174,7 @@ bool readBuffer(const char *readBuf, vector<char> &msgBuf, int bytesRead, bool c
                     vector<__uint16_t> result;
                     convertMsgToWords(msgBuf, result);
 
-                    parseMsg(result, telegramBuffer,action); // do something with result
+                    parseMsgRS232(result, telegramBuffer, action); // do something with result
 
                     // DEBUG print result
                     /*printf("pas in words: ");

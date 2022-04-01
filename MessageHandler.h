@@ -20,16 +20,16 @@
 
 
 
-//void parseMsg(std::vector<WORD> &msg,  std::vector<__uint16_t> &telegramBuffer);
-void parseMsg(std::vector<WORD> &msg,  std::vector<__uint16_t> &telegramBuffer,void action (std::vector<__uint16_t>&));
+//void parseMsgRS232(std::vector<WORD> &msg,  std::vector<__uint16_t> &telegramBuffer);
+void parseMsgRS232(std::vector<WORD> &msg, std::vector<__uint16_t> &telegramBuffer, void action (std::vector<__uint16_t>&));
 std::string wordToString(WORD input);
 void buildMsgFromWord(std::vector<WORD> &data,std::vector<WORD> &msg);
 WORD block_crc16_word(WORD *data, WORD numOfBytes, WORD initial_crc);
-//bool readBuffer(const char *readBuf, std::vector<char> &msgBuf, int bytesRead, bool continueLastMsg,std::vector<__uint16_t> &telegramBuffer);
-bool readBuffer(const char *readBuf, std::vector<char> &msgBuf, int bytesRead, bool continueLastMsg,std::vector<__uint16_t> &telegramBuffer,void action (std::vector<__uint16_t>&));
+//bool readBufferRS232(const char *readBuf, std::vector<char> &msgBuf, int bytesRead, bool continueLastMsg,std::vector<__uint16_t> &telegramBuffer);
+bool readBufferRS232(const char *readBuf, std::vector<char> &msgBuf, int bytesRead, bool continueLastMsg, std::vector<__uint16_t> &telegramBuffer, void action (std::vector<__uint16_t>&));
 int convertMsgToWords(std::vector<char> &msg,  std::vector<__uint16_t> &res);
 WORD vecCrc(std::vector<WORD> data);
-std::string buildTelegram(std::vector<WORD> data);
+std::string buildTelegramRS232(std::vector<WORD> data);
 
 
 

@@ -3,7 +3,7 @@
 #include "comtest.h"
 #include "MessageHandler.h"
 #include "MessagePrinter.h"
-
+#include "AutoMeasure.h"
 
 
 using namespace std;
@@ -11,7 +11,7 @@ using namespace std;
 void sendCommand(int serial_port, vector<WORD> data)
 {
 
-    string telegram = buildTelegram(data);
+    string telegram = buildTelegramRS232(data);
     cout << telegram << endl;
     write(serial_port, telegram.c_str(), telegram.size());
 
@@ -126,6 +126,36 @@ int main()
     
     //WORD testMsg2[] = {0x0000, 0x8202, 0x0001, 0x0006, 0x0000, 0x0001, 0x0008};
     // sendCommand(serial_port,testMsg2,7);
+
+    /*
+    //Auto Mode
+    auto sendFunc= [serial_port](vector<WORD> &pData){ sendCommand(serial_port,pData);};
+    auto readFunc=[serial_port](void actionFunc(vector<WORD>&)){
+        int bytes_available=0;
+        char read_buf[buf_size];
+        bool incompleteMsg = false;
+        vector<__uint16_t> telegramBuffer;
+        vector<char> msg_buf;
+        while (bytes_available == 0) {
+                ioctl(serial_port, FIONREAD, &bytes_available);
+            }
+            do {
+                memset(&read_buf, '\0', sizeof(read_buf)); // maybe not needed
+
+                int num_bytes = read(serial_port, &read_buf, sizeof(read_buf));
+
+                // n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
+                if (num_bytes < 0) {
+                    printf("Error reading: %s", strerror(errno));
+                    return;
+                }
+                incompleteMsg = readBufferRS232(read_buf, msg_buf, num_bytes, incompleteMsg, telegramBuffer,actionFunc);
+                ioctl(serial_port, FIONREAD, &bytes_available);
+            } while (incompleteMsg || bytes_available > 0);};
+    //performAutoMeasure(sendFunc,readFunc);
+    AutoMeasure::performAutoMeasure(sendFunc,readFunc);
+   //Manual Mode
+   */
     int opMode=0;
     do {
         cout << "Select op Mode: read only (1), write only(2), read/write(3): ";
@@ -170,7 +200,8 @@ int main()
 
 
 
-                incompleteMsg = readBuffer(read_buf, msg_buf, num_bytes, incompleteMsg, telegramBuffer,printResponse);
+                incompleteMsg = readBufferRS232(read_buf, msg_buf, num_bytes, incompleteMsg, telegramBuffer,
+                                                printResponse);
                 ioctl(serial_port, FIONREAD, &bytes_available);
             } while (incompleteMsg || bytes_available > 0);
         }
