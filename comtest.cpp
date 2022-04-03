@@ -4,7 +4,7 @@
 #include "MessageHandler.h"
 #include "MessagePrinter.h"
 #include "AutoMeasure.h"
-
+#include "MessageHandlerEnternet.h"
 
 using namespace std;
 
@@ -105,7 +105,8 @@ int inputMsg(int SerialPort){ //TODO add auto split msg
 
 int main()
 {
-    int serial_port = open(com_port, O_RDWR);
+    //rs232 stuff
+    /*int serial_port = open(com_port, O_RDWR);
     // Check for errors
     if (serial_port < 0)
     {
@@ -156,6 +157,7 @@ int main()
     AutoMeasure::performAutoMeasure(sendFunc,readFunc);
    //Manual Mode
    */
+    /*
     int opMode=0;
     do {
         cout << "Select op Mode: read only (1), write only(2), read/write(3): ";
@@ -210,6 +212,28 @@ int main()
 
 
 
-    close(serial_port);
+    close(serial_port);*/
+
+    std::function<void (std::vector<WORD>&)> action=[](std::vector<WORD>&msg){
+        printf("received:");
+        for (const auto& r : msg){
+        printf("%04X,",r);
+        }
+    printf("\n");
+    };
+
+    unsigned char testMsg[15]={0x02,0x55,0x53,0x50,0x00,0x00,0x00,0x06,0x81,0x02,0x00,0x00,0x00,0x01,0x82};
+    char test[15];
+    for (int i=0;i<15;++i){
+        test[i]=testMsg[i];
+    }
+    std::vector<char> msgBuf;
+    std::vector<WORD>msg={0x08102,0x0000,0x0001};
+    std::vector<__uint8_t> res = buildTelegram(msg);
+    for (const auto& r : res){
+        printf("%02X,",r);
+    }
+    printf("\n");
+    readBuffer( test, msgBuf, 15, action);
     return 0;
 }
