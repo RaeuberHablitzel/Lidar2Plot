@@ -1,8 +1,7 @@
 #define buf_size 256
-
-#define baud_rate B115200
+//#define baud_rate B115200
 //#define com_port "/dev/ttyACM0"
-#define com_port "/dev/ttyUSB0"
+//#define com_port "/dev/ttyUSB0"
 
 //#define printColorRed "\033[0;31m"
 //#define printColorNormal "\033[0m"
@@ -29,4 +28,9 @@
 #include <termios.h> // Contains POSIX terminal control definitions
 #include <unistd.h> // write(), read(), close()
 #include <sys/ioctl.h>
+
+#define ASIO_STANDALONE
+#include <../../../../../../usr/include/asio.hpp>
+#include <asio/ts/buffer.hpp>
+#include <asio/ts/internet.hpp>
 

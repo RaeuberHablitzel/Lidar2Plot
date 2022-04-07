@@ -7,9 +7,9 @@
 using namespace std;
 
 
-void parseMsgRS232(vector<__uint16_t> &msg, vector<__uint16_t> &telegramBuffer, void *action (vector<__uint16_t>&))
+void parseMsgRS232(vector<__uint16_t> &msg, vector<__uint16_t> &telegramBuffer, std::function<void(std::vector<__uint16_t>&)>& action)
 {
-    int len= msg.size();
+    unsigned int len= msg.size();
     // check crc
     WORD crc = block_crc16_word(&msg[0], (len - 1) * 2, 0xffff);
     if (crc != msg[len - 1])
@@ -56,7 +56,7 @@ std::string wordToString(WORD input)
     std::string res;
     for (char i = 3; i >= 0; --i)
     {
-        char t = (input >> (i * 4)) & 0xF;
+        char t = (char)((input >> (i * 4)) & 0xF);
         res.append({(char)(t + 0x30 + (t > 9) * 0x07)});
     }
     return res;
@@ -82,7 +82,7 @@ string buildTelegramRS232(vector<__uint16_t> data){ //TODO finish
     return telegram;
 }
 
-WORD vecCrc(vector<WORD> data){
+WORD vecCrc(const vector<WORD>& data){
 
     WORD crc = 0xFFFF;
 
@@ -116,7 +116,7 @@ WORD block_crc16_word(WORD *data, WORD numOfBytes, WORD initial_crc)
 int convertMsgToWords(vector<char> &msg,  vector<__uint16_t> &res)
 {
     vector<__uint16_t> tempRes;
-    int len= msg.size();
+    unsigned int len= msg.size();
     res.clear();
     // printf("msg:%s\n",msg);
 
@@ -142,11 +142,11 @@ int convertMsgToWords(vector<char> &msg,  vector<__uint16_t> &res)
     //    printf(" %c %c,",std::min(std::max(0x20,(int)tempRes[i]), 0x7E),std::min(std::max(0x20,(int)tempRes[i+1]), 0x7E) );
     //}
     //printf("\n");
-    return (len - 2) / 4;
+    return ((int)len - 2) / 4;
 }
 
 bool readBufferRS232(const char *readBuf, vector<char> &msgBuf, int bytesRead, bool continueLastMsg,
-                     vector<__uint16_t> &telegramBuffer, void *action (vector<__uint16_t>&))
+                     vector<__uint16_t> &telegramBuffer, std::function<void(vector<__uint16_t>&)>& action)
 {
 
     int i = 0;

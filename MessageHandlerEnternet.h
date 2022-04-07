@@ -10,6 +10,9 @@
 #include <cstdio>
 #include <array>
 #include "functional"
-std::vector<__uint8_t> buildTelegram(std::vector<WORD> &msg);
-bool readBuffer(const char *readBuf, std::vector<char> &msgBuf, int bytesRead, std::function<void(std::vector<__uint16_t>&)>&action);
+namespace msgHE{
+    std::vector<__uint8_t> buildTelegram(std::vector<WORD> &msg);
+    bool readBuffer(const unsigned char *readBuf, std::vector<unsigned char> &msgBuf, int bytesRead, std::function<void(std::vector<__uint16_t>&)>&action);
+    int convertMsgToWords(std::vector<char> &msg,  std::vector<__uint16_t> &res);
+}
 #endif //COMTEST_MESSAGEHANDLERENTERNET_H

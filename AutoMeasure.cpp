@@ -5,7 +5,6 @@
 
 #include "AutoMeasure.h"
 #include "cmath"
-
 using namespace std;
 namespace AutoMeasure {
 
@@ -14,12 +13,12 @@ namespace AutoMeasure {
     int angleStep = -1;
     int motorSpeed = -1;
     int state = -1;
-    const std::vector<std::vector<WORD>> commands = {{0x0000,0x0401,0x0002},            // reset
-                                                     {0x0000,0x0202,  0x0010},      //get config - global
-                                                     {0x0000,0x0102},               //get status
-                                                     {0x0000,0x0403, 0x0000},       //trans rotate
-                                                     {0x0000,0x0404},               //trans measure
-                                                     {0x0000,0x0301, 0001, 0x0100}};//get single Profile just distance
+    const std::vector<std::vector<WORD>> commands = {{0x0401,0x0002},            // reset
+                                                     {0x0202,  0x0010},      //get config - global
+                                                     {0x0102},               //get status
+                                                     {0x0403, 0x0000},       //trans rotate
+                                                     {0x0404},               //trans measure
+                                                     {0x0301, 0001, 0x0100}};//get single Profile just distance
 
 
 
@@ -45,7 +44,7 @@ namespace AutoMeasure {
                 break;
             case 0x8401:
                 cout << "got reset" << endl;
-                state=1;
+                state=-2;//1;
                 break;
             case 0x8202: //get config: global
                 cout << "got config" << endl;
