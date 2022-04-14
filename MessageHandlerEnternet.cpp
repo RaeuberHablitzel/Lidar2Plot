@@ -10,13 +10,13 @@ namespace msgHE{
     const std::array<__uint8_t,4> startSeq={0x02,0x55,0x53,0x50};
 
 
-    bool readBuffer(const unsigned char *readBuf, std::vector<unsigned char> &msgBuf, int bytesRead, std::function<void(std::vector<__uint16_t>&)> &action){
+    bool readBuffer(std::vector<__uint8_t>& readBuf, std::vector<unsigned char> &msgBuf, std::function<void(std::vector<__uint16_t>&)> &action){
     __uint32_t msgLen = 0;
         int i =0;
         unsigned int msgSize=0;
         bool msgLenKnown=false;
 
-        for (i=0; i<bytesRead;++i){
+        for (i=0; i<readBuf.size();++i){
             msgSize=msgBuf.size();
             //printf("%02X,",readBuf[i]);
             if (msgSize<4){ //look for startSequence

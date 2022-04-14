@@ -195,7 +195,9 @@ int r232Main(){
 
 
 
-                std::function<void (std::vector<__uint16_t>&)> action =[](std::vector<__uint16_t>& msg) { printResponse(msg); };
+                std::function<void (std::vector<__uint16_t>&)> action =[](std::vector<__uint16_t>& msg) {
+                    printResponse(
+                            msg); };
                 incompleteMsg = readBufferRS232(read_buf, msg_buf, num_bytes, incompleteMsg, telegramBuffer,
                                                 action);
                 ioctl(serial_port, FIONREAD, &bytes_available);

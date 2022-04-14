@@ -12,7 +12,7 @@
 #include "functional"
 namespace msgHE{
     std::vector<__uint8_t> buildTelegram(std::vector<WORD> &msg);
-    bool readBuffer(const unsigned char *readBuf, std::vector<unsigned char> &msgBuf, int bytesRead, std::function<void(std::vector<__uint16_t>&)>&action);
+    bool readBuffer(std::vector<__uint8_t>& readBuf, std::vector<unsigned char> &msgBuf, std::function<void(std::vector<__uint16_t>&)> &action);
     int convertMsgToWords(std::vector<char> &msg,  std::vector<__uint16_t> &res);
 }
 #endif //COMTEST_MESSAGEHANDLERENTERNET_H

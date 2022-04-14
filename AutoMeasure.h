@@ -14,9 +14,10 @@ namespace AutoMeasure {
     void responseParser(std::vector<WORD> &msg);
 
     void printProfile(const std::vector<__uint16_t> &msg);
-
+    void setLidarValues(const std::vector<__uint16_t> &msg);
     void performAutoMeasure(std::function<void(std::vector<WORD> &)> send, std::function<void(
             void action(std::vector<WORD> &))> read);//,void (*read)(void action(std::vector<WORD>&)));
+    void asyncAutoMeasure(std::function<void(std::vector<WORD> &)> send, std::vector<WORD> &msg);
 }
 
 

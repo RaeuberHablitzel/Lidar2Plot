@@ -29,8 +29,9 @@
 #include <unistd.h> // write(), read(), close()
 #include <sys/ioctl.h>
 
+
 #define ASIO_STANDALONE
-#include <../../../../../../usr/include/asio.hpp>
+#include <asio.hpp>
 #include <asio/ts/buffer.hpp>
 #include <asio/ts/internet.hpp>
 
