@@ -18,6 +18,7 @@ namespace AutoMeasure {
     void performAutoMeasure(std::function<void(std::vector<WORD> &)> send, std::function<void(
             void action(std::vector<WORD> &))> read);//,void (*read)(void action(std::vector<WORD>&)));
     void asyncAutoMeasure(std::function<void(std::vector<WORD> &)> send, std::vector<WORD> &msg);
+    void printSegmentProfile(const std::vector <__uint16_t> &msg, std::vector<__uint16_t> &sectorNrPoints , std::vector<__uint16_t> &sectorStartPoints );
 }
 
 

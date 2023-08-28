@@ -15,17 +15,20 @@ namespace AutoMeasure {
 
     Gnuplot gp;
     std::vector<boost::tuple<double, double> > pos;
-    int pointsPerSector = -1;
+    //int pointsPerSector = -1;
     int angleStep = -1;
     int motorSpeed = -1;
     int state = 0;
     int minX,maxX,minY,maxY;
+    std::vector<WORD> pointsPerSector;
+    std::vector<WORD> sectorStartAngles;
+
     const std::vector<std::vector<WORD>> commands = {//{0x0401,0x0002},            // reset
                                                      //{0x0202,  0x0010},      //get config - global
                                                      {0x0102},               //get status
                                                      {0x0403, 0x0000},       //trans rotate
                                                      {0x0404},               //trans measure
-                                                     {0x0301, 0x0001, 0x0030},
+                                                     {0x0301, 0x0001, 0x00B0},
                                                      {0x0301, 0x0000, 0x0100},
                                                      {}};//get single Profile just distance
     const std::vector<std::string> states={//"reset",
@@ -41,12 +44,14 @@ namespace AutoMeasure {
     void asyncAutoMeasure(std::function<void(std::vector<WORD> &)> send, std::vector<WORD> &msg){
         switch (msg[0]) {
             case 0x8301:
-                if ((msg[1]&0b110000)==48) {
+                if ((msg[1]&0b10110000)==176 && (angleStep<0 || pointsPerSector.empty() || sectorStartAngles.empty())) {
                     setLidarValues(msg);
                     state = 4;
                 }else {
                     state = 5;
-                    printProfile(msg);
+                    //printProfile(msg);
+                    printSegmentProfile(msg,pointsPerSector,sectorStartAngles);
+
                 }
                 break;
             case 0x8102: //get status
@@ -119,6 +124,7 @@ namespace AutoMeasure {
                 }else {
                     state = 5;
                     printProfile(msg);
+
                 }
                 break;
             case 0x8401:
@@ -132,8 +138,8 @@ namespace AutoMeasure {
                     std::cout << "motor speed: " <<motorSpeed <<std::endl;
                     angleStep = msg[4];
                     std::cout << "angleStep: " <<angleStep <<std::endl;
-                    pointsPerSector = 360 / (angleStep / 16);
-                    std::cout << "pointsPerSector: " <<pointsPerSector <<std::endl;
+                    //pointsPerSector = 360 / (angleStep / 16);
+                    //std::cout << "pointsPerSector: " << pointsPerSector <<std::endl;
                     state=2;
 
                 } else {
@@ -179,7 +185,51 @@ namespace AutoMeasure {
         }
     }
 
+
+    void printSegmentProfile(const std::vector <__uint16_t> &msg, std::vector<__uint16_t> &sectorNrPoints , std::vector<__uint16_t> &sectorStartPoints ){
+
+        WORD profileFormat = msg[1];
+        bool distance = profileFormat & 0b100000000, direction = profileFormat & 0b1000000000, echo =
+                profileFormat & 0b10000000000;
+        int dataOffset=3; //TODO calc for Frame
+
+        pos.clear();
+
+        unsigned long offset= std::bitset<16>(profileFormat & 0xFF).count()+dataOffset;
+        for(int iSegments = 0 ; iSegments < sectorNrPoints.size(); ++iSegments){
+            //do someLoop
+            //printf("sectorNR: %i, pointsPerSector: %i:",iSegments,pointsPerSector[iSegments]);
+            double angleOffset= ((double)sectorStartPoints[iSegments])/16;
+            printf("SectorStart: %f",angleOffset);
+            for(int i=0; i < sectorNrPoints[iSegments]; ++i){
+                int iterationOffset = i* distance + direction + echo;
+
+                if (distance){
+                    double x = ((double) msg[offset + iterationOffset] / 256)*sin((((double)angleStep/16)*i+((double)sectorStartPoints[iSegments]/16))*M_PI/180);
+                    double y = ((double) msg[offset + iterationOffset] / 256)*cos((((double)angleStep/16)*i+((double)sectorStartPoints[iSegments]/16))*M_PI/180);
+                    //printf("(%.2f,%.2f),",x,y);
+                    //printf("%i,",msg[offset + iterationOffset]);
+                    minX= std::min((int)std::floor(x),minX);
+                    minY= std::min((int)std::floor(y),minY);
+                    maxX= std::max((int)std::ceil(x),maxX);
+                    maxY= std::max((int)std::ceil(y),maxY);
+                    pos.push_back(boost::make_tuple(x,y));
+
+                }
+
+            }
+            offset+= std::bitset<16>(profileFormat & 0xF8).count() + sectorNrPoints[iSegments] * (distance + direction + echo); //+nPoints*data 1111 1000
+            printf("\n");
+        }
+        gp << "set xrange [" << minX << ":" << minX+std::max(maxX-minX,maxY-minY) << "]\nset yrange [" << minY<< ":" << minY+std::max(maxX-minX,maxY-minY) << "]\nset size ratio -1\n";
+        gp << "plot '-' title 'Lidar'\n";
+        gp.send1d(pos);
+    }
+
+
+
     void printProfile(const std::vector<__uint16_t> &msg) { //TODO add multi sector support
+        int defaultstartSector=0;
         WORD profileFormat = msg[1];
         char numberOfSectors = (char) (msg[2] & 0xFF);
         char numberOfLayers = (char) (msg[2] >> 8);
@@ -188,25 +238,27 @@ namespace AutoMeasure {
         bool distance = profileFormat & 0b100000000, direction = profileFormat & 0b1000000000, echo =
                 profileFormat & 0b10000000000;
 
+
         pos.clear();
         if (distance || direction || echo) { // bit 8 9 10
             offset = std::bitset<16>(profileFormat & 0xFF).count();
-            if (pointsPerSector != -1) {
-                printf("\tpoints: ");
-                for (int iPoints = 0; iPoints < pointsPerSector; ++iPoints) {
+            if (!pointsPerSector.empty()) {
+                printf("\tpoints:\t\t");
+                for (int iPoints = 0; iPoints < pointsPerSector[defaultstartSector]; ++iPoints) {
                     unsigned long iterationOffset = offset + (distance + direction + echo) * iPoints;
                     //printf("(");
                     if (distance) {
                         double x = ((double) msg[msgData + iterationOffset] / 256)*sin(((double)angleStep/16)*iPoints*M_PI/180);
                         double y = ((double) msg[msgData + iterationOffset] / 256)*cos(((double)angleStep/16)*iPoints*M_PI/180);
-                        printf("(%.2d,%.2d),",x,y);
-                        minX= std::min((int)std::floor(x),minX);
+                        //printf("%i,",msg[msgData + iterationOffset]);
+                        //printf("(%.2f,%.2f),",x,y);
+                        /*minX= std::min((int)std::floor(x),minX);
                         minY= std::min((int)std::floor(y),minY);
                         maxX= std::max((int)std::ceil(x),maxX);
-                        maxY= std::max((int)std::ceil(y),maxY);
+                        maxY= std::max((int)std::ceil(y),maxY);*/
                         //printf("%.4f", (float) msg[msgData + iterationOffset] / 256);
                         //printf("%.4f\t%.4f",((float) msg[msgData + iterationOffset] / 256)*sin((angleStep/16)*iPoints*M_PI/180),((float) msg[msgData + iterationOffset] / 256)*cos((angleStep/16)*iPoints*M_PI/180));
-                        pos.push_back(boost::make_tuple(x,y));
+                        //pos.push_back(boost::make_tuple(x,y));
                     }
                     if (direction) {
                         printf(",%.4f", (float) msg[msgData + iterationOffset + distance] / 16);
@@ -217,22 +269,53 @@ namespace AutoMeasure {
                     //printf("\n");
                     //printf("\n)");
                 }
-                printf("\n");
+                printf("\ntocheck:\t\t");
+                std::vector<__uint16_t> testSector={0,44,0,180};
+                std::vector<__uint16_t> testStartPoints ={0,125,147,270};
+                printSegmentProfile(msg,pointsPerSector,sectorStartAngles);
             }
+
         }
         //gp << "set xrange [-1:4]\nset yrange [-3:1]\nset size ratio -1\n";
 
-        gp << "set xrange [" << minX << ":" << minX+std::max(maxX-minX,maxY-minY) << "]\nset yrange [" << minY<< ":" << minY+std::max(maxX-minX,maxY-minY) << "]\nset size ratio -1\n";
+        /*gp << "set xrange [" << minX << ":" << minX+std::max(maxX-minX,maxY-minY) << "]\nset yrange [" << minY<< ":" << minY+std::max(maxX-minX,maxY-minY) << "]\nset size ratio -1\n";
         gp << "plot '-' title 'Lidar'\n";
-        gp.send1d(pos);
+        gp.send1d(pos);//*/
 
     }
-    void setLidarValues(const std::vector<__uint16_t> &msg) { //TODO add multi sector support
+    void setLidarValues(const std::vector<__uint16_t> &msg){ //TODO DELETE usless stuff and implement new
+        printf("getting lidarValues\n");
+        WORD profileFormat = msg[1];
+        pointsPerSector.clear();
+        sectorStartAngles.clear();
+        bool distance = profileFormat & 0b100000000, direction = profileFormat & 0b1000000000, echo =
+                profileFormat & 0b10000000000;
+        int dataOffset=3; //TODO calc for Frame
+        char numberOfSectors= (char)(msg[2] & 0xFF);
+        unsigned long offset= std::bitset<16>(profileFormat & 0x0F).count()+dataOffset;
+        for(int iSegments = 0 ; iSegments < numberOfSectors; ++iSegments){
+
+
+            angleStep= msg[offset];
+            WORD tmpPointsPerSector= msg[offset+1];
+            WORD sectorStartDir= msg[offset+2+((profileFormat&0b1000000)>0)];
+            printf("SectroDir: %i ",sectorStartDir);
+            printf("pointsPerSec: %i ",tmpPointsPerSector);
+            pointsPerSector.push_back(tmpPointsPerSector);
+            sectorStartAngles.push_back(sectorStartDir);
+            offset+= std::bitset<16>(profileFormat & 0xF8).count() + tmpPointsPerSector * (distance + direction + echo)+((profileFormat&0b1000000000000)>0); //TODO add TEND to offset
+            printf("\n");
+        }
+        printf("angleStep: %i\n",angleStep);
+    }
+
+    /*void setLidarValuesOld(const std::vector<__uint16_t> &msg) { //TODO add multi sector support
         WORD profileFormat=msg[1];
-        //char numberOfSectors= (char)(msg[2] & 0xFF);
-        //char numberOfLayers= (char)(msg[2] >> 8);
+        char numberOfSectors= (char)(msg[2] & 0xFF);
+        char numberOfLayers= (char)(msg[2] >> 8);
         int msgData= 3;
         unsigned long offset;
+
         //bool distance=profileFormat&0b100000000, direction=profileFormat&0b1000000000, echo=profileFormat&0b10000000000;
         /*
         snprintf(printBuffer+ strlen(printBuffer), printBuffer_size-strlen(printBuffer),"\tProfileFormat: %04X\n",profileFormat);
@@ -255,7 +338,7 @@ namespace AutoMeasure {
             offset = bitset<16>(profileFormat&0b111).count();
             snprintf(printBuffer+ strlen(printBuffer), printBuffer_size-strlen(printBuffer),"\tSector number: %i\n",msg[msgData+(offset)]);
         }*/
-        if (profileFormat&0b10000){ // bit 4
+        /*if (profileFormat&0b10000){ // bit 4
             offset = std::bitset<16>(profileFormat&0b1111).count();
             angleStep=msg[msgData+(offset)];
             printf("angleStep: %i\n",angleStep);
@@ -298,7 +381,7 @@ namespace AutoMeasure {
             }
         }*/
         // TEND, ENDDRIR, SENSTAT mayby von len aus
-    }
+    //}
 
 
 }

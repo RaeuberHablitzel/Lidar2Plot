@@ -190,11 +190,11 @@ void printResponse(vector<WORD> &msg) {
                             break;
                         case 0x0005:
                             snprintf(printBuffer+ strlen(printBuffer), printBuffer_size-strlen(printBuffer),"\tEthernet Config:\n");
-                            snprintf(printBuffer+ strlen(printBuffer), printBuffer_size-strlen(printBuffer),"\t\tIP Address:\t%i.%i.%i.%i\n", msg[2], msg[3], msg[4], msg[5]);
-                            snprintf(printBuffer+ strlen(printBuffer), printBuffer_size-strlen(printBuffer),"\t\tSubnet mask:\t%i.%i.%i.%i\n", msg[6], msg[7], msg[8], msg[9]);
-                            snprintf(printBuffer+ strlen(printBuffer), printBuffer_size-strlen(printBuffer),"\t\tStandard gateway:\t%i.%i.%i.%i\n", msg[10], msg[11], msg[12], msg[13]);
-                            snprintf(printBuffer+ strlen(printBuffer), printBuffer_size-strlen(printBuffer),"\t\tNode ID: %04x\n",msg[14]);
-                            snprintf(printBuffer+ strlen(printBuffer), printBuffer_size-strlen(printBuffer),"\t\tTCP/IP Transparent port: %04x\n",msg[15]);
+                            snprintf(printBuffer+ strlen(printBuffer), printBuffer_size-strlen(printBuffer),"\t\tIP Address:      \t%i.%i.%i.%i\t0x%04X,0x%04X,0x%04X,0x%04X\n", msg[2], msg[3], msg[4], msg[5], msg[2], msg[3], msg[4], msg[5]);
+                            snprintf(printBuffer+ strlen(printBuffer), printBuffer_size-strlen(printBuffer),"\t\tSubnet mask:     \t%i.%i.%i.%i\t0x%04X,0x%04X,0x%04X,0x%04X\n", msg[6], msg[7], msg[8], msg[9], msg[6], msg[7], msg[8], msg[9]);
+                            snprintf(printBuffer+ strlen(printBuffer), printBuffer_size-strlen(printBuffer),"\t\tStandard gateway:\t%i.%i.%i.%i\t0x%04X,0x%04X,0x%04X,0x%04X\n", msg[10], msg[11], msg[12], msg[13], msg[10], msg[11], msg[12], msg[13]);
+                            snprintf(printBuffer+ strlen(printBuffer), printBuffer_size-strlen(printBuffer),"\t\tNode ID: %04x\t0x%04X\n",msg[14],msg[14]);
+                            snprintf(printBuffer+ strlen(printBuffer), printBuffer_size-strlen(printBuffer),"\t\tTCP/IP Transparent port: %04x\t0x%04X\n",msg[15],msg[15]);
 
                             break;
                         case 0x0010: // Global config
